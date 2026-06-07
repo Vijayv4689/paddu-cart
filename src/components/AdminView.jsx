@@ -158,7 +158,11 @@ export const AdminView = () => {
       upiId: settingsUpi,
       whatsappNumber: settingsWhatsapp,
       preparationTime: settingsPrepTime,
-      baseUrl: settingsBaseUrl
+      baseUrl: settingsBaseUrl,
+      // Preserve the merchant identity fields so the UPI deep-link stays P2M compliant
+      // (matching payee name + MCC = no "declined for security reasons" prompt).
+      payeeName: settings.payeeName || 'G J SIDDARTH',
+      merchantCategoryCode: settings.merchantCategoryCode || '5812'
     });
     if (success) {
       alert('Settings updated successfully!');
@@ -787,3 +791,5 @@ export const AdminView = () => {
     </main>
   );
 };
+
+
