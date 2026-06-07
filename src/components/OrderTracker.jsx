@@ -94,10 +94,12 @@ export const OrderTracker = ({ onBackToMenu }) => {
     const payName = 'Paddu Point';
     const cleanUpiId = settings.upiId.replace(/\s+/g, '');
     
-    // We include the amount (&am=) directly based on cart value as requested,
-    // but exclude transaction note (&tn=) to avoid triggering security restrictions on P2P intents.
-    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR`;
-    
+    // IMPORTANT: Omit both &am= (amount) and &tn= (note).
+    // When amount is pre-filled in a UPI deep-link to an unverified UPI ID, NPCI/banks
+    // auto-decline the moment customer chooses "Bank Account" as funding source —
+    // showing "Your payment is declined for security reasons. Please try using mobile
+    // number, UPI, QR". Letting the customer enter the amount manually clears this flag.
+    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
     if (isAndroid) {
       switch (app) {
         case 'gpay':
@@ -396,9 +398,15 @@ export const OrderTracker = ({ onBackToMenu }) => {
             <h3 style={{ fontSize: '18px', color: 'var(--text-color)' }}>UPI QR Payment</h3>
             <p className="order-details-meta">Scan or Click to pay directly</p>
             
-            {/* Clickable UPI link for mobile, QR for desktop */}
+             {/* Real BharatPe merchant QR — registered as P2M with NPCI,
+                much more reliable than dynamic P2P QR strings (which often get
+                flagged for "security reasons" on bank-account payments). */}
             <div className="upi-qr-wrapper">
-              <QRCodeSVG value={upiQrLink} size={200} level="H" />
+              <img
+                src="/upi-qr.jpeg"
+                alt="BharatPe Merchant QR — Paddu Point"
+                style={{ width: '260px', height: 'auto', maxWidth: '100%', borderRadius: '8px' }}
+              />
             </div>
 
             <div className="upi-meta-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -450,7 +458,13 @@ export const OrderTracker = ({ onBackToMenu }) => {
               textAlign: 'left',
               lineHeight: '1.4'
             }}>
-              <b>💡 Security Tip:</b> If your payment app declines the transaction, copy the UPI ID above and paste it directly into GPay/PhonePe to pay, or scan the QR Code.
+              <b>💡 Getting "Payment declined for security reasons"?</b><br/>
+              This happens when paying directly from <b>Bank Account</b> with a pre-filled amount. To fix:
+              <ol style={{ margin: '6px 0 0 18px', padding: 0 }}>
+                <li>Scan the <b>QR code</b> above with your UPI app's camera, OR</li>
+                <li>Copy the UPI ID and paste it inside GPay / PhonePe and enter ₹{currentOrder.totalPrice} manually, OR</li>
+                <li>In your UPI app, switch funding source to <b>UPI Lite / Wallet</b> instead of Bank Account.</li>
+              </ol>
             </div>
 
             <div className="upi-app-selector" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -542,7 +556,7 @@ export const OrderTracker = ({ onBackToMenu }) => {
               </div>
               
               <p className="order-details-meta mt-2" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', textAlign: 'center' }}>
-                💡 Note: Google Pay/PhonePe will open with the exact amount (₹{currentOrder.totalPrice}) pre-filled automatically.
+            💡 Enter the exact amount <b>₹{currentOrder.totalPrice}</b> in your UPI app. Manual entry helps avoid bank "security decline" errors on Bank Account payments.
               </p>
             </div>
           </div>
