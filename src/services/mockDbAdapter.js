@@ -32,9 +32,26 @@ function setStored(key, value) {
 if (!localStorage.getItem(MENU_KEY)) setStored(MENU_KEY, []);
 if (!localStorage.getItem(ORDERS_KEY)) setStored(ORDERS_KEY, []);
 if (!localStorage.getItem(SETTINGS_KEY))
-  setStored(SETTINGS_KEY, { upiId: '7795143969-2@ybl', whatsappNumber: '+917795143969', preparationTime: '15' });
+  setStored(SETTINGS_KEY, { upiId: 'BHARATPE2M0L0E1O2Y57508@unitype', payeeName: 'G J SIDDARTH', merchantCategoryCode: '5812', whatsappNumber: '+919880243924', preparationTime: '15' });
 if (!localStorage.getItem(CONNECTION_KEY)) setStored(CONNECTION_KEY, true);
 if (!localStorage.getItem(FEEDBACK_KEY)) setStored(FEEDBACK_KEY, []);
+
+// One-time migration: force-upgrade returning customers whose browsers cached the OLD
+// personal UPI ID (which triggered the "payment declined for security reasons" prompt
+// when paying from a Bank Account). Bump the version to roll out future fixes.
+const SETTINGS_VERSION_KEY = 'paddu_settings_version';
+const CURRENT_SETTINGS_VERSION = '2';
+if (localStorage.getItem(SETTINGS_VERSION_KEY) !== CURRENT_SETTINGS_VERSION) {
+  const existing = getStored(SETTINGS_KEY, {}) || {};
+  setStored(SETTINGS_KEY, {
+    ...existing,
+    upiId: 'BHARATPE2M0L0E1O2Y57508@unitype',
+    payeeName: 'G J SIDDARTH',
+    merchantCategoryCode: '5812',
+    whatsappNumber: '+919880243924'
+  });
+  localStorage.setItem(SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION);
+}
 
 // Subscription pools – simple Set of callbacks
 const menuSubs = new Set();
@@ -181,3 +198,5 @@ export const mockDbService = {
     return getStored(FEEDBACK_KEY, []);
   }
 };
+
+
