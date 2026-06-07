@@ -56,12 +56,17 @@ export const OrderTracker = ({ onBackToMenu }) => {
   const currentStatusIndex = statuses.indexOf(currentOrder.status);
 
   // Generate UPI payment deep links
-  const payName = 'Paddu Point';
+  // Use the registered merchant payee name (must match name on UPI handle) — mismatched names
+  // are the #1 cause of "payment declined for security reasons" when paying from Bank Account.
+  const payName = settings.payeeName || 'Paddu Point';
   const cleanUpiId = settings.upiId.replace(/\s+/g, '');
-  // Link for QR Code (includes amount and transaction note, trusted via physical camera scan)
-  const upiQrLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&tn=Paddu%20Point%20Order%20${currentOrder.orderNumber}&cu=INR`;
-  // Link for direct mobile app launch (excludes amount and note to bypass browser security declines on personal accounts)
-  const upiMobileLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
+  // Merchant Category Code: tells the UPI rails this is a P2M (merchant) txn, not P2P.
+  // 5812 = Eating Places & Restaurants. Required for BharatPe / merchant UPI IDs.
+  const mcc = settings.merchantCategoryCode || '5812';
+  // Link for QR Code (includes amount, MCC, and transaction note — fully P2M compliant)
+  const upiQrLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR&mc=${mcc}&tn=Order${currentOrder.orderNumber}`;
+  // Link for direct mobile app launch (uses MCC so bank rails treat it as merchant payment)
+  const upiMobileLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR&mc=${mcc}`;
 
   // Generate WhatsApp message text
   const getWhatsAppLink = () => {
@@ -91,12 +96,15 @@ export const OrderTracker = ({ onBackToMenu }) => {
   const getAppUpiLink = (app) => {
     const isAndroid = /Android/.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    const payName = 'Paddu Point';
+    const payName = settings.payeeName || 'Paddu Point';
     const cleanUpiId = settings.upiId.replace(/\s+/g, '');
-    
-    // We include the amount (&am=) directly based on cart value as requested,
-    // but exclude transaction note (&tn=) to avoid triggering security restrictions on P2P intents.
-    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR`;
+    const mcc = settings.merchantCategoryCode || '5812';
+
+    // P2M-compliant query: payee name MUST match registered merchant name on the UPI handle,
+    // and we include &mc= (Merchant Category Code) so bank rails recognise this as a merchant
+    // payment instead of a P2P transfer (which is what triggers the "declined for security
+    // reasons" prompt when the user chooses Bank Account as the funding source).
+    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR&mc=${mcc}&tn=Order${currentOrder.orderNumber}`;
     
     if (isAndroid) {
       switch (app) {
@@ -448,9 +456,14 @@ export const OrderTracker = ({ onBackToMenu }) => {
               fontSize: '11px',
               color: 'hsl(35, 80%, 25%)',
               textAlign: 'left',
-              lineHeight: '1.4'
+              lineHeight: '1.5'
             }}>
-              <b>💡 Security Tip:</b> If your payment app declines the transaction, copy the UPI ID above and paste it directly into GPay/PhonePe to pay, or scan the QR Code.
+              <b>💡 If payment is declined when choosing &quot;Bank Account&quot;:</b>
+              <ol style={{ paddingLeft: '18px', margin: '6px 0 0 0' }}>
+                <li>Tap <b>Scan QR</b> above (most reliable — uses merchant rails).</li>
+                <li>Or, in your UPI app, choose <b>UPI Lite</b> / <b>Wallet</b> as the payment source instead of Bank Account.</li>
+                <li>Or, copy the UPI ID below and pay from <b>Pay to UPI ID</b> option directly.</li>
+              </ol>
             </div>
 
             <div className="upi-app-selector" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -551,3 +564,4 @@ export const OrderTracker = ({ onBackToMenu }) => {
     </div>
   );
 };
+
