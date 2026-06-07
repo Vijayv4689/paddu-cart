@@ -10,8 +10,10 @@ let state = {
   orders: [],
   feedback: [],
   settings: {
-    upiId: '7795143969-2@ybl',
-    whatsappNumber: '+917795143969',
+    upiId: 'BHARATPE2M0L0E1O2Y57508@unitype',
+    payeeName: 'G J SIDDARTH',
+    merchantCategoryCode: '5812',
+    whatsappNumber: '+919880243924',
     preparationTime: '15',
     baseUrl: ''
   }
@@ -333,3 +335,5 @@ export const dbService = {
 
 // Legacy export for backward compatibility
 export const DB_MODE = 'websocket';
+
+
