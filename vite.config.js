@@ -10,6 +10,6 @@ export default defineConfig({
     host: true
   },
   preview: {
-    allowedHosts: ['paddu-cart.onrender.com']
+    allowedHosts: ['paddu-cart-ncwl.onrender.com']  // ✅ must match your Render domain exactly
   }
 })
